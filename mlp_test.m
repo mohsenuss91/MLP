@@ -20,7 +20,7 @@ if (strcmp(Mode,'MNIST'))
     test_output=cell(length(test_labels),1);
     
     for i=1:num_train
-        input_img = train_IMG{i};
+        input_img = double(train_IMG{i});
         [width height] = size(input_img);
         img_vec = reshape(input_img,1,width*height);
         input{i}=double(img_vec);
@@ -28,7 +28,7 @@ if (strcmp(Mode,'MNIST'))
     end
     
     for i=1:length(test_input)
-        input_img = test_IMG{i};
+        input_img = double(test_IMG{i});
         [width height] = size(input_img);
         img_vec = reshape(input_img,1,width*height);
         test_input{i} = double(img_vec);
@@ -73,7 +73,8 @@ end
 
 %% Determine # of nodes in hidden layer & output layer
 num_node_il = length(input{1});
-num_node_hl = [num_node_il*2];
+%num_node_hl = [num_node_il*2];
+num_node_hl = [num_node_il];
 num_node_ol = length(output{1});
 
 set_node =[num_node_il num_node_hl num_node_ol];
@@ -86,13 +87,19 @@ W=cell(num_layer-1,1);
 B=cell(num_layer-1);
 
 for i=1:num_layer-1
-    W{i} = -1+2.*rand(set_node(i),set_node(i+1));
+
+	%% [Xavier10] shows that the interval ~ from https://deeplearning.net/tutorial/mlp.html
+		
+    min_W = -4*sqrt(6/(set_node(i)+set_node(i+1)));
+    max_W = 4*sqrt(6/(set_node(i)+set_node(i+1)));
+	
+	W{i} = min_W+(2*max_W).*rand(set_node(i),set_node(i+1));
     B{i} = rand(1,set_node(i+1));
 end
 
 %% Learning coeff = 0.7 & Iteration = 10
 lrn_rate = 0.5;
-max_iter = 10000;
+max_iter = 50000;
 
 
 tic
@@ -107,18 +114,16 @@ for i= 1:max_iter
         
         
         % Forward Propagation
-        [Act]   =   FP(train_input,Act,W,B,num_layer);
+        [Act]   		=   FP(train_input,Act,W,B,num_layer);
         % Backward Propagation & Template update
         [W,B,Err]       =   BP(train_output,Act,W,B,num_layer,lrn_rate,Err);
         
-        Result(i).W=W;
-        Result(i).B=B;
-        Result(i).Err_1 = Err{1};
-        Result(i).Err_2 = Err{2};
     end
 end
 
 toc
+
+save
 disp('Training Ends')
 
 if (strcmp(Mode,'XOR'))
@@ -133,8 +138,9 @@ if (strcmp(Mode,'XOR'))
             
         end
     end
+	[X,Y] = meshgrid(grid);
+	mesh(X,Y,Z)
 end
-[X,Y] = meshgrid(grid);
-mesh(X,Y,Z)
+
 
 
