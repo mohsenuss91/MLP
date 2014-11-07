@@ -84,7 +84,7 @@ end
 
 %% Learning coeff = 0.7 & Iteration = 10
 lrn_rate = 0.3;
-max_iter = 10000;
+max_iter = 100;
 
 
 tic
@@ -94,7 +94,7 @@ Act=cell(num_layer,1);
 Err=cell(num_layer-1,1);
 
 
-
+err_trace=[];
 for index_inter= 1:max_iter
     
     if mod(index_inter,50) ==0
@@ -121,7 +121,11 @@ for index_inter= 1:max_iter
         last_Err_arr(end+1) = abs(last_Err);
         
     end
-    if mean(last_Err_arr) < power(10,-12)
+    
+    
+    err_trace(end+1) = mean(last_Err_arr);
+    
+    if mean(last_Err_arr) < power(10,-6)
         index_inter
         break
     end
@@ -157,7 +161,9 @@ elseif (strcmp(Mode,'MNIST'))
     end
 end
 
-figure(1);scatter((Guess_arr*10),test_labels)
+
+%figure(1);scatter((Guess_arr*10),test_labels)
+figure(2);plot(err_trace);
 
 save
 
