@@ -7,6 +7,8 @@ for k=1:num_layer-1
     
     temp = Act{k} * W{k} + B{k};
     Act{k+1} = active_func(temp);
+    
+    
 end
 
 end

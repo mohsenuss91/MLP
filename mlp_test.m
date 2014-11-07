@@ -11,7 +11,7 @@ Mode = 'MNIST'
 if (strcmp(Mode,'MNIST'))
     % Load the digits into workspace (MNIST Test, from
     % http://yann.lecun.com/exdb/mnist/)
-    num_train = 100;
+    num_train = 1000;
     [train_IMG,train_labels,test_IMG,test_labels] = readMNIST(num_train);
     input =cell(num_train,1);
     output =cell(num_train,1);
@@ -24,7 +24,7 @@ if (strcmp(Mode,'MNIST'))
         [width height] = size(input_img);
         img_vec = reshape(input_img,1,width*height);
         input{i}=double(img_vec);
-        output{i} = double(train_labels(i));
+        output{i} = double(train_labels(i))/10;
     end
     
     for i=1:length(test_input)
@@ -32,7 +32,7 @@ if (strcmp(Mode,'MNIST'))
         [width height] = size(input_img);
         img_vec = reshape(input_img,1,width*height);
         test_input{i} = double(img_vec);
-        test_output{i} = double(test_labels(i));
+        test_output{i} = double(test_labels(i))/10;
     end
 elseif (strcmp(Mode,'XOR'))
     
@@ -53,21 +53,6 @@ end
 if (length(input)~=length(output))
     error('len_input does not equal to len_output');
 end
-
-
-
-
-
-%% Global Var??
-% global train_IMG;
-% global train_labels;
-% global test_IMG;
-% global test_labels;
-% global num_layer;
-% global W;
-% global B;
-% global Act;
-
 
 
 
@@ -98,8 +83,8 @@ for i=1:num_layer-1
 end
 
 %% Learning coeff = 0.7 & Iteration = 10
-lrn_rate = 0.5;
-max_iter = 50000;
+lrn_rate = 0.3;
+max_iter = 10000;
 
 
 tic
@@ -107,10 +92,24 @@ tic
 
 Act=cell(num_layer,1);
 Err=cell(num_layer-1,1);
-for i= 1:max_iter
+
+
+
+for index_inter= 1:max_iter
+    
+    if mod(index_inter,50) ==0
+        mean(last_Err_arr)
+        index_inter
+    end
+    last_Err_arr=[];    
     for j= 1:num_train
-        train_input = input{j};
-        train_output = output{j};
+        
+        P = randperm(num_train);
+        
+        
+        
+        train_input = input{P(j)};
+        train_output = output{P(j)};
         
         
         % Forward Propagation
@@ -118,6 +117,13 @@ for i= 1:max_iter
         % Backward Propagation & Template update
         [W,B,Err]       =   BP(train_output,Act,W,B,num_layer,lrn_rate,Err);
         
+        last_Err= Err{end};
+        last_Err_arr(end+1) = abs(last_Err);
+        
+    end
+    if mean(last_Err_arr) < power(10,-12)
+        index_inter
+        break
     end
 end
 
@@ -125,6 +131,7 @@ toc
 
 save
 disp('Training Ends')
+
 
 if (strcmp(Mode,'XOR'))
     grid = [0:0.01:1];
@@ -140,7 +147,17 @@ if (strcmp(Mode,'XOR'))
     end
 	[X,Y] = meshgrid(grid);
 	mesh(X,Y,Z)
+
+elseif (strcmp(Mode,'MNIST'))
+    Guess_arr = [];
+    for i=1:length(test_input)
+        
+        [guess_result] = FP(test_input{i},Act,W,B,num_layer);
+        Guess_arr(end+1) = guess_result{3};
+    end
 end
 
+figure(1);scatter((Guess_arr*10),test_labels)
 
+save
 

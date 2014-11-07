@@ -15,9 +15,7 @@ function [model] = update_mlp(model, input, target)
         % model.weights{i} is a matrix of weights
         % the output of that product is a row vector of length equal to the
         % number of neurons in the next layer
-        act_size = size(activations{i})
-	wei_size = size(model.weights{i})
-	bia_size = size(model.biases{i})
+)
 	
 	temp = activations{i} * model.weights{i} + model.biases{i}
         activations{i+1} = 1./(1+exp(-(temp))); % squash the output a bit
