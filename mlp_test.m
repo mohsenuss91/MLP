@@ -20,7 +20,11 @@ if (strcmp(Mode,'MNIST'))
     test_output=cell(length(test_labels),1);
     
     for i=1:num_train
-        input_img = double(train_IMG{i});
+        %input_img = double(train_IMG{i});
+        %Pre processing - prewitt
+        input_img = edge(train_IMG{i},'prewitt');
+        
+             
         [width height] = size(input_img);
         img_vec = reshape(input_img,1,width*height);
         input{i}=double(img_vec);
@@ -32,7 +36,12 @@ if (strcmp(Mode,'MNIST'))
     end
     
     for i=1:length(test_input)
-        input_img = double(test_IMG{i});
+        %input_img = double(test_IMG{i});
+        %Pre processing - prewitt
+        input_img = edge(test_IMG{i},'prewitt');
+        
+        
+        
         [width height] = size(input_img);
         img_vec = reshape(input_img,1,width*height);
         test_input{i} = double(img_vec);
@@ -93,8 +102,15 @@ for i=1:num_layer-1
 end
 
 %% Learning coeff = 0.7 & Iteration = 10
+
+% 141108, Success rate = 0.725
+%lrn_rate = 0.3;
+%max_iter = 100;
+
+
 lrn_rate = 0.3;
-max_iter = 100;
+max_iter = 1000;
+
 
 
 tic
@@ -105,19 +121,21 @@ Err=cell(num_layer-1,1);
 
 
 err_trace=[];
+
+
+
+
 for index_inter= 1:max_iter
     
     if mod(index_inter,50) ==0
-        mean(last_Err_arr)
         index_inter
     end
-    last_Err_arr=[];    
+       
+    Act_trace=[];
+    Train_trace = [];
     for j= 1:num_train
         
         P = randperm(num_train);
-        
-        
-        
         train_input = input{P(j)};
         train_output = output{P(j)};
         
@@ -127,18 +145,21 @@ for index_inter= 1:max_iter
         % Backward Propagation & Template update
         [W,B,Err]       =   BP(train_output,Act,W,B,num_layer,lrn_rate,Err);
         
-        last_Err= Err{end};
-        last_Err_arr(end+1) = abs(last_Err);
+        % Debug
         
-    end
-    
-    
-    err_trace(end+1) = mean(last_Err_arr);
-    
-    if mean(last_Err_arr) < power(10,-6)
-        index_inter
-        break
-    end
+        
+        
+        [row,col]=find(Act{end}==max(Act{end}));
+        Act_trace(end+1)=col-1;
+        
+        [row,col]=find(train_output==max(train_output));
+        Train_trace(end+1)=col-1;
+        
+    end   
+
+    All_arr(index_inter).act = Act_trace;
+    All_arr(index_inter).train=Train_trace;
+    All_arr(index_inter).err = Act_trace-Train_trace;
 end
 
 toc
@@ -147,32 +168,44 @@ save
 disp('Training Ends')
 
 
-% if (strcmp(Mode,'XOR'))
-%     grid = [0:0.01:1];
-%     Z=-1*ones(length(grid),length(grid));
-%     for i=1:length(grid)
-%         for j=1:length(grid)
-%             test = [grid(i) grid(j)];
-%             Act_new = FP(test,Act,W,B,num_layer);
-%             Z(i,j) = Act_new{3};
-%             
-%         end
-%     end
-% 	[X,Y] = meshgrid(grid);
-% 	mesh(X,Y,Z)
-% 
-% elseif (strcmp(Mode,'MNIST'))
-%     Guess_arr = [];
-%     for i=1:length(test_input)
-%         
-%         [guess_result] = FP(test_input{i},Act,W,B,num_layer);
-%         Guess_arr(end+1) = guess_result{3};
-%     end
-% end
+if (strcmp(Mode,'XOR'))
+    grid = [0:0.01:1];
+    Z=-1*ones(length(grid),length(grid));
+    for i=1:length(grid)
+        for j=1:length(grid)
+            test = [grid(i) grid(j)];
+            Act_new = FP(test,Act,W,B,num_layer);
+            Z(i,j) = Act_new{3};
+            
+        end
+    end
+	[X,Y] = meshgrid(grid);
+	mesh(X,Y,Z)
 
+elseif (strcmp(Mode,'MNIST'))
+    Guess_arr = [];
+    for i=1:length(test_input)
+        
+        [guess_result] = FP(test_input{i},Act,W,B,num_layer);
+        
+        [row,col]=find(guess_result{end}==max(guess_result{end}));
+        Guess_arr(end+1)=col-1;
+        
+    end
+end
+
+Z=zeros(10,10);
+
+for i =1:length(test_labels)
+    Z(Guess_arr(i)+1,test_labels(i)+1)=Z(Guess_arr(i)+1,test_labels(i)+1)+1;
+end
+
+
+
+Abs_err = Guess_arr-double(test_labels)';
+success_rate = sum(Guess_arr-double(test_labels)'==0)/1000
+%plot(abs(Guess_arr-double(test_labels)'))
 
 %figure(1);scatter((Guess_arr*10),test_labels)
-figure(2);plot(err_trace);
-
-save
+%figure(2);plot(err_trace);
 
