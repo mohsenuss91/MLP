@@ -24,7 +24,11 @@ if (strcmp(Mode,'MNIST'))
         [width height] = size(input_img);
         img_vec = reshape(input_img,1,width*height);
         input{i}=double(img_vec);
-        output{i} = double(train_labels(i))/10;
+        
+        labels_arr = zeros(1,10);
+        labels_arr(train_labels(i)+1)=1;
+        output{i} = labels_arr;
+        
     end
     
     for i=1:length(test_input)
@@ -32,7 +36,13 @@ if (strcmp(Mode,'MNIST'))
         [width height] = size(input_img);
         img_vec = reshape(input_img,1,width*height);
         test_input{i} = double(img_vec);
-        test_output{i} = double(test_labels(i))/10;
+        
+        labels_arr = zeros(1,10);
+        labels_arr(test_labels(i)+1)=1;
+        test_output{i} = labels_arr;
+        
+        
+        
     end
 elseif (strcmp(Mode,'XOR'))
     
@@ -137,29 +147,28 @@ save
 disp('Training Ends')
 
 
-if (strcmp(Mode,'XOR'))
-    grid = [0:0.01:1];
-    Z=-1*ones(length(grid),length(grid));
-    
-    for i=1:length(grid)
-        for j=1:length(grid)
-            test = [grid(i) grid(j)];
-            Act_new = FP(test,Act,W,B,num_layer);
-            Z(i,j) = Act_new{3};
-            
-        end
-    end
-	[X,Y] = meshgrid(grid);
-	mesh(X,Y,Z)
-
-elseif (strcmp(Mode,'MNIST'))
-    Guess_arr = [];
-    for i=1:length(test_input)
-        
-        [guess_result] = FP(test_input{i},Act,W,B,num_layer);
-        Guess_arr(end+1) = guess_result{3};
-    end
-end
+% if (strcmp(Mode,'XOR'))
+%     grid = [0:0.01:1];
+%     Z=-1*ones(length(grid),length(grid));
+%     for i=1:length(grid)
+%         for j=1:length(grid)
+%             test = [grid(i) grid(j)];
+%             Act_new = FP(test,Act,W,B,num_layer);
+%             Z(i,j) = Act_new{3};
+%             
+%         end
+%     end
+% 	[X,Y] = meshgrid(grid);
+% 	mesh(X,Y,Z)
+% 
+% elseif (strcmp(Mode,'MNIST'))
+%     Guess_arr = [];
+%     for i=1:length(test_input)
+%         
+%         [guess_result] = FP(test_input{i},Act,W,B,num_layer);
+%         Guess_arr(end+1) = guess_result{3};
+%     end
+% end
 
 
 %figure(1);scatter((Guess_arr*10),test_labels)
